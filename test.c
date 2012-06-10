@@ -1,0 +1,47 @@
+
+int gl;
+int j;
+#define K 2
+
+int first(){
+
+}
+
+/*
+float f11(float a){
+}
+*/
+
+//int f1(int a)
+//
+
+unsigned int f1(float a, float b)
+{
+	//...
+	//while(){ //ddd
+	/*
+		while(){//
+	*/
+	for(i = 0; true;){
+	}
+
+}
+
+unsigned int f1_1(float a)
+{
+
+}
+
+	signed int * * f22(){
+	}
+	
+	int * f2( ){
+		//if( aa ){
+		// while(){
+		if(b){}
+		for(int i = 0; i < 1; i++){
+		
+		}
+	}
+
+

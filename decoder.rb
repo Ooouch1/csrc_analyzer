@@ -44,7 +44,7 @@ class Decoder
 		return removed
 	end
 
-	#requires escaped text if you want use "(", "*" and so on as a character
+	#requires escaped text if you want to use "(", "*" and so on as a character
 	def createCommentContaining(text)
 	
 		line = Regexp.new( @@LCOM_HEAD + @@LCOM_BODY + text.to_s() + @@LCOM_BODY + @@LCOM_TAIL )
@@ -150,17 +150,17 @@ class Decoder
 
 end
 
-dec = Decoder.new()
-
-code = nil;
-
-
-open("test.c"){
-	|file|
-	code = file.read
-}
-
 # test codes
+#dec = Decoder.new()
+#
+#code = nil;
+#
+#
+#open("test.c"){
+#	|file|
+#	code = file.read
+#}
+
 #puts dec.extractComments code
 #dec.removeComments code
 #dec.extractFunctions code
