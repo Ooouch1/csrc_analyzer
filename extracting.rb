@@ -1,6 +1,11 @@
 	class ExtractingState
 		attr_reader :index
-	  
+		@@vLCOM_HEAD_S = "//"
+		@@vLCOM_TAIL_S = "\n"
+		
+		@@vBCOM_HEAD_S = "/*"
+		@@vBCOM_TAIL_S = "*/"
+		
 		def initialize(index, depth = 0)
 			@index = index
 			@depth = depth
@@ -26,6 +31,16 @@
 
 	end
 
+	def ExtractingState::setLineComment(head, tail)
+		@@vLCOM_HEAD_S = head
+		@@vLCOM_TAIL_S = tail
+	end
+	
+	def ExtractingState::setBlockComment(head, tail)
+		@@vBCOM_HEAD_S = head
+		@@vBCOM_TAIL_S = tail
+	end
+	
 	class ExtractingBegin < ExtractingState
 		def extract(code)
 			return ExtractingCode.new(@index).extract(code)
@@ -49,7 +64,7 @@
 	class ExtractingBlockComment < ExtractingState
 		def extract(code)
 			#p "block " + @index.to_s
-			if isOnText(code, @index, "*/")
+			if isOnText(code, @index, @@vBCOM_TAIL_S)
 				@index += 1
 				return ExtractingCode.new(@index, @depth)
 			else 
@@ -65,8 +80,7 @@
 			#p "line" + @index.to_s
 			c = code[@index]
 
-#			if code.index(/\n/) == @index
-			if isOnText(code, @index, "\n")
+			if isOnText(code, @index, @@vLCOM_TAIL_S)
 				@index += 1
 				return ExtractingCode.new(@index, @depth)
 			else
@@ -87,10 +101,11 @@
 				return ExtractingEnd.new(@index)
 			end
 			
-			if isOnText(code, @index, "//")
+			if isOnText(code, @index, @@vLCOM_HEAD_S)
 				return ExtractingLineComment.new(@index + 1, @depth)
-			elsif isOnText(code, @index, "/*")
-					return ExtractingBlockComment.new(@index + 1, @depth)
+
+			elsif isOnText(code, @index, @@vBCOM_HEAD_S)
+				return ExtractingBlockComment.new(@index + 1, @depth)
 			end
 
 			c = code[@index]
@@ -105,9 +120,7 @@
 					puts "at the end of the function"
 					return ExtractingEnd.new(@index, @depth) # reach the end of the function!
 			end
-			else
-				#extract code # keep going
-			end
+
 			return self
 		end
 	end

@@ -21,14 +21,20 @@ class Decoder
 	# C-language definitions
 	# extend this class to override them for other language
 
-		@@LCOM_HEAD = "\/\/"
+		@@LCOM_HEAD_S = "//"
+		@@LCOM_TAIL_S = "\n"
+		
+		@@LCOM_HEAD = Regexp.escape(@@LCOM_HEAD_S)
 		@@LCOM_BODY ="[^\n]*"
-		@@LCOM_TAIL = "\n"
+		@@LCOM_TAIL = Regexp.escape(@@LCOM_TAIL_S)
 		@@LINE_COMMENT = Regexp.new(@@LCOM_HEAD + @@LCOM_BODY + @@LCOM_TAIL)
 
-		@@BCOM_HEAD = "\/\\*\/?"
+		@@BCOM_HEAD_S = "/*"
+		@@BCOM_TAIL_S = "*/"
+
+		@@BCOM_HEAD = Regexp.escape(@@BCOM_HEAD_S) + "\/?" # it seems not smart ('_')
 		@@BCOM_BODY = "([^\/]|[^\\*]\/)*"
-		@@BCOM_TAIL = "\\*\/"
+		@@BCOM_TAIL = Regexp.escape(@@BCOM_TAIL_S)
 		@@BLOCK_COMMENT = Regexp.new(@@BCOM_HEAD + @@BCOM_BODY + @@BCOM_TAIL)
 
 		@@COMMENT = Regexp.union(@@LINE_COMMENT, @@BLOCK_COMMENT)
@@ -150,20 +156,4 @@ class Decoder
 	end
 
 end
-
-# test codes
-#dec = Decoder.new()
-#
-#code = nil;
-#
-#
-#open("test.c"){
-#	|file|
-#	code = file.read
-#}
-
-#puts dec.extractComments code
-#dec.removeComments code
-#dec.extractFunctions code
-
 
