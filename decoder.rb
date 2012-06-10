@@ -68,7 +68,7 @@ class Decoder
 		return removed
 	end
 
-	# 該当したすべての文字列を配列で返す
+	# returns all comments as array
 	def extractComments(code)
 		comments = extractAll(code, @@COMMENT)
 		puts "-------- comments ---------"
@@ -78,7 +78,8 @@ class Decoder
 
 
 	
-	# assumes comments containing function def. are removed
+	# this method assumes comments containing function def. are removed.
+	# returns DecodedFunction whose body still contain comments.
 	def extractFunction(code, name)
 		require "./extracting"
 
@@ -100,7 +101,7 @@ class Decoder
 		return decoded
 	end
 
-
+	# returns array of DecodedFunction whose body still contain comments.
 	def extractFunctions(code, names = nil)
 	
 		puts code
@@ -119,7 +120,7 @@ class Decoder
 		functions
 	end
 
-	# コメントアウトされていても拾うので注意
+	# warning: this method catches function def. in comments as well
 	def extractFuncNames(code)
 		names = extractAll(code, @@FUNCTION_DEF)
 

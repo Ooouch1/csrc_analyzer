@@ -29,6 +29,10 @@ unsigned int f1(float a, float b)
 
 unsigned int f1_1(float a)
 {
+	while(true){
+		if(a == 0){
+		}
+	}
 
 }
 
