@@ -70,13 +70,16 @@ require "./lang_def"
 
 	require "./extracting"
 	def extract(code, extracting_class, name, start_ = 0)
+		puts "start extracting "
 		puts name.to_s
 		match = code.match(name, start_)
-		puts match[0]
+
 		# no exist
 		if match == nil
 			return nil
 		end
+		puts match[0]
+
 		start = match.begin(0)
 		state = extracting_class.new(start)
 		puts start.to_s
@@ -103,7 +106,7 @@ require "./lang_def"
 
 		
 		decoded = extract(code, 
-				ExtractingMacroIf, @@M_IF_SOME_HEAD, start)
+				ExtractingMacroIf, @@M_IF_SOME_HEAD, 0)
 
 		if decoded != nil
 			decoded.inMacroIf = true
