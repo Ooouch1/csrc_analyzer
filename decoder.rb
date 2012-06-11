@@ -1,5 +1,5 @@
 
-class DecodedFunction
+class Decoded
 	attr_accessor :name
 	attr_accessor :body
 	attr_accessor :comments
@@ -72,7 +72,14 @@ require "./lang_def"
 	def extract(code, extracting_class, name, start_ = 0)
 		puts "start extracting "
 		puts name.to_s
-		match = code.match(name, start_)
+		
+		reg = nil
+		if name.class == String
+			reg = Regexp.new(Regexp.escape(name))
+		else
+			reg = name
+		end
+		match = reg.match(code, start_)
 
 		# no exist
 		if match == nil
@@ -90,7 +97,7 @@ require "./lang_def"
 
 		body = code[start..state.index]
 		
-		decoded = DecodedFunction.new(match[0] +" @"+ start.to_s, body)
+		decoded = Decoded.new(match[0] +" @"+ start.to_s, body)
 		decoded.head = start
 		decoded.tail = state.index
 
@@ -102,11 +109,9 @@ require "./lang_def"
 
 	# detect #if ... #endif area
 	def extractMacroIf(code, start)
-		require "./extracting"
-
 		
 		decoded = extract(code, 
-				ExtractingMacroIf, @@M_IF_SOME_HEAD, 0)
+				ExtractingMacroIf, @@M_IF_SOME_HEAD, start)
 
 		if decoded != nil
 			decoded.inMacroIf = true
@@ -119,31 +124,18 @@ require "./lang_def"
 
 	
 	# this method assumes comments containing function def. are removed.
-	# returns DecodedFunction whose body still contain comments.
-	def extractFunction(code, name)
-		require "./extracting"
+	# returns Decoded whose body still contain comments.
+	def extractFunction(code, name, start = 0)
 
-		start = code.index(name)
-		p start
-		state = ExtractingCode.new(start)
-
-		# solve by state pattern
-		while (not state.isEnd(code)) and (state.index < code.length) 
-			state = state.extract(code)
-		end
-
-		func = code[start..state.index]
+		decoded = extract(code, 
+				ExtractingCode, name, start)
 		
-		decoded = DecodedFunction.new(name, func, extractComments(func))
-		decoded.head = start
-		decoded.tail = state.index
-
 		puts "-------- Func ---------"
 		puts decoded
 		return decoded
 	end
 
-	# returns array of DecodedFunction whose body still contain comments.
+	# returns array of Decoded whose body still contain comments.
 	def extractFunctions(code, names = nil)
 	
 		puts code
@@ -170,31 +162,6 @@ require "./lang_def"
 		functions
 	end
 
-	def extractFunctions2(code, names = nil)
-	
-		puts code
-		if names == nil
-			noFuncComment = removeCommentsContaining(code, @@FUNCTION_DEF)
-			names = extractFuncNames( noFuncComment)
-		end
-		
-		functions = Array.new()
-
-		last_index = 0
-		
-		for name in names
-			puts "start " + name
-			puts "last: " + last_index.to_s
-
-			func = extractFunction(code, name)
-
-			last_index = func.tail + 1
-
-			functions.push func
-		end
-
-		functions
-	end
 	# warning: this method catches function def. in comments as well
 	def extractFuncNames(code)
 		names = extractAll(code, @@FUNCTION_DEF)

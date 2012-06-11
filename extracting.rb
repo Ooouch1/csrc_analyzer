@@ -105,14 +105,14 @@
 			@vTAIL = tail
 		end
 		
-		def goNext(code, state_class = ExtractingEnd)
+		def goNext(code, next_class = ExtractingEnd)
 			if isOnText(code, @index, @vHEAD)
 				@depth += 1
 			elsif isOnText(code, @index, @vTAIL)
 				@depth -= 1
 				if @depth == 0
 					puts "at the end of the pair"
-					return state_class.new(@index + code.match(@vTAIL, @index)[0].length, @depth) # reach the end of the function!
+					return next_class.new(@index + code.match(@vTAIL, @index)[0].length, @depth) # reach the end of the function!
 				end
 			end
 
