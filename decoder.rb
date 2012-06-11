@@ -6,8 +6,10 @@ class DecodedFunction
 	attr_accessor :deleted
 	attr_accessor :head
 	attr_accessor :tail
-	
+	attr_accessor :inMacroIf	
+
 	@deleted = false
+	@inMacroIf = false
 	
 	def initialize(name = "", body = "", comments = nil)
 		@name = name
@@ -66,6 +68,51 @@ require "./lang_def"
 		return comments
 	end
 
+	require "./extracting"
+	def extract(code, extracting_class, name, start_ = 0)
+		puts name.to_s
+		match = code.match(name, start_)
+		puts match[0]
+		# no exist
+		if match == nil
+			return nil
+		end
+		start = match.begin(0)
+		state = extracting_class.new(start)
+		puts start.to_s
+		# solve by state pattern
+		while (not state.isEnd(code)) and (state.index < code.length) 
+			state = state.extract(code)
+		end
+
+		body = code[start..state.index]
+		
+		decoded = DecodedFunction.new(match[0] +" @"+ start.to_s, body)
+		decoded.head = start
+		decoded.tail = state.index
+
+		puts "-------- extract ---------"
+		puts start.to_s + "," + state.index.to_s
+		puts decoded
+		return decoded	
+	end
+
+	# detect #if ... #endif area
+	def extractMacroIf(code, start)
+		require "./extracting"
+
+		
+		decoded = extract(code, 
+				ExtractingMacroIf, @@M_IF_SOME_HEAD, start)
+
+		if decoded != nil
+			decoded.inMacroIf = true
+		end
+		
+		puts "-------- inside of #if ---------"
+		puts decoded
+		return decoded
+	end
 
 	
 	# this method assumes comments containing function def. are removed.
@@ -93,49 +140,6 @@ require "./lang_def"
 		return decoded
 	end
 
-
-	# detect deleted function
-	def extractFuncIfZero(code, name, start_)
-		require "./extracting"
-
-		# correct request?: start of #if has to be smaller than start of name
-		start = code.index(@@IF_ZERO_HEAD, start_)
-		func_start = code.index(name, start_)
-
-
-		# no #if exist
-		if start == nil || func_start == nil
-			return nil
-		end
-
-		if func_start <= start
-			return nil
-		end
-		
-		p start
-		state = ExtractingIfZero.new(start)
-
-		# solve by state pattern
-		while (not state.isEnd(code))
-			state = state.extract(code)
-		end
-
-		# not inside of #if 0 ... #endif
-		if state.index <= func_start
-			return nil
-		end
-
-		func = code[start..state.index]
-
-		decoded = DecodedFunction.new(name, func, extractComments(func))
-		decoded.head = start
-		decoded.tail = state.index
-
-		puts "-------- Func ---------"
-		puts decoded
-		return decoded
-	end
-
 	# returns array of DecodedFunction whose body still contain comments.
 	def extractFunctions(code, names = nil)
 	
@@ -150,22 +154,10 @@ require "./lang_def"
 		last_index = 0
 		
 		for name in names
-			# catch "#if 0" deleted functions
-			func_ifzero = nil
-			#func_ifzero = extractFuncIfZero(code, name, last_index)
-			func = nil
-
 			puts "start " + name
 			puts "last: " + last_index.to_s
 
-			if func_ifzero != nil
-				func = func_ifzero
-				func.deleted = true
-				puts name + " is deleted!"
-			else
-				# catch enabled functions
-				func = extractFunction(code, name)
-			end
+			func = extractFunction(code, name)
 
 			last_index = func.tail + 1
 
@@ -175,6 +167,31 @@ require "./lang_def"
 		functions
 	end
 
+	def extractFunctions2(code, names = nil)
+	
+		puts code
+		if names == nil
+			noFuncComment = removeCommentsContaining(code, @@FUNCTION_DEF)
+			names = extractFuncNames( noFuncComment)
+		end
+		
+		functions = Array.new()
+
+		last_index = 0
+		
+		for name in names
+			puts "start " + name
+			puts "last: " + last_index.to_s
+
+			func = extractFunction(code, name)
+
+			last_index = func.tail + 1
+
+			functions.push func
+		end
+
+		functions
+	end
 	# warning: this method catches function def. in comments as well
 	def extractFuncNames(code)
 		names = extractAll(code, @@FUNCTION_DEF)
@@ -189,6 +206,16 @@ require "./lang_def"
 	end
 
 	def extractAll(code, reg)
+
+		found = Array.new()
+		extractAllAsMatch(code, reg).each{
+			|m|
+			found.push m[0]
+		}
+		return found
+	end
+
+	def extractAllAsMatch(code, reg)
 		found = Array.new()
 		puts "-------- extract all ------"
 		p reg
@@ -197,7 +224,7 @@ require "./lang_def"
 
 		while(match != nil)
 			matched = match[0]
-			found.push matched
+			found.push match
 			index = match.begin(0)
 			match = reg.match(code, index + matched.length) 
 		end

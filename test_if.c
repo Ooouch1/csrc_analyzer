@@ -22,9 +22,13 @@ unsigned int f1(float a, float b)
 	/*
 		while(){//
 	*/
+
+#if DEBUG
+
 	for(i = 0; true;){
 	}
 
+#endif
 }
 
 unsigned int f1_1(float a)

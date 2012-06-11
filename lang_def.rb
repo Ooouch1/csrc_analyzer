@@ -23,11 +23,13 @@
 
 		@@COMMENT = Regexp.union(@@LINE_COMMENT, @@BLOCK_COMMENT)
 		@@FUNCTION_DEF = /((unsigned\s+|signed\s+)?\w+(\s+|\s*(\s*\*)+\s*)\w+\s*\([^\);]*\))/ # unsigned? type(ex: int, int**)  name(signitures)
-
-		@@IF_NOZERO_HEAD = /#(if|ifdef|ifndef)\s+([^0\s]|[^\s]{2,})\s+/
-		@@IF_ZERO_HEAD = /#if\s+0\s+/
-		@@IF_HEAD = /#if/
-		@@IF_TAIL = /#endif/
+		
 		
-		@@CODE_HEAD = /\{/
-		@@CODE_TAIL = /\}/
+		@@M_IF_NOZERO_HEAD = /#((if|ifdef|ifndef)\s+([^0\s]|[^\s]{2,})\s)/
+		@@M_IF_ZERO_HEAD = /#if\s+0\s+/
+		@@M_IF_SOME_HEAD = /#((if|ifdef|ifndef)\s+.+\s)/
+		@@M_IF_HEAD = /#(if|ifdef|ifndef)/
+		@@M_IF_TAIL = /#endif/
+		
+		@@CODE_HEAD = Regexp.new("{")
+		@@CODE_TAIL = Regexp.new("}")
