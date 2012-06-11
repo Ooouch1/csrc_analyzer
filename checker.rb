@@ -41,10 +41,19 @@
 				puts "group: " + group
 
 				for keyword in keywords
-					puts "keyword: " + keyword
-					match = text.match(Regexp.new(keyword))
-					p match
+					puts "keyword: " + keyword.to_s
+					# prepare regular expression
+					reg = nil
+					if keyword.class == String
+						reg = Regexp.new(keyword)
+					else
+						reg = keyword
+					end
+					# do match
+					match = text.match(reg)
+					puts reg.inspect
 					if match != nil
+						puts match[0]
 						onKeywordFound(group, keyword, result)
 					end
 				end
@@ -73,13 +82,13 @@
 				csv += toCSVLine(name, resultHash) + "\n"
 				
 			}
-				
+			puts csv
 			csv
 		end
 		
 		# a method for creating titles in CSV
 		def createHeader()
-			header = escape("name")
+			header = quote("name")
 			@dictionary.each_key{
 				|group|
 				header += toAppendable(group)
@@ -91,7 +100,7 @@
 		def toCSVLine(name, resultHash)
 
 			line = ""
-			line +=  escape(name)
+			line +=  quote(name)
 			
 			resultHash.each{
 				|group, keywords|
@@ -113,16 +122,61 @@
 		end
 
 		# useful method for concatenating value to CSV line
-		protected
 		def toAppendable(value)
-			", " + escape(value)
+			", " + quote(value)
 		end
 
-		def escape(text)
-			if text.match(/[\,"\s]/) == nil
+		def quote(text)
+			if text.match(/[\"\,\s]/) == nil
 				return text
 			end
 			return "\"" + text.gsub("\"", "\"\"") + "\""
+		end
+		
+
+		# &onEachFunc should return a hash of |group, keywords|
+		def createCSV(file_name, code, &onEachFunc)
+			require "./decoder"
+			decoder = Decoder.new
+			
+			results = Hash.new
+
+			decoder.eachFunctions(code){
+				|func|
+				results[func.name] = onEachFunc.call(func)
+			}
+
+			csv = file_name + "\n" + toCSV(results)
+
+			csv
+	
+	
+		end
+		
+		# methods wrapping toCSV
+		
+		def createCommentCSV(file_name, code)
+
+			csv = createCSV(file_name, code){
+				|func|
+				findKeywords(func.comments)
+			}
+
+			csv
+		end
+		
+		def createBodyCSV(file_name, code)
+
+			csv = createCSV(file_name, code){
+				|func|
+				findKeywords(func.body)
+			}
+
+			csv
+		end
+		
+		def createNameCSV(code)
+			
 		end
 	end
 

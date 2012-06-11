@@ -3,7 +3,12 @@ class DecodedFunction
 	attr_accessor :name
 	attr_accessor :body
 	attr_accessor :comments
-
+	attr_accessor :deleted
+	attr_accessor :head
+	attr_accessor :tail
+	
+	@deleted = false
+	
 	def initialize(name = "", body = "", comments = nil)
 		@name = name
 		@body = body
@@ -17,30 +22,9 @@ class DecodedFunction
 	end
 end
 
-class Decoder 
-	# C-language definitions
-	# extend this class to override them for other language
+class Decoder
 
-		@@LCOM_HEAD_S = "//"
-		@@LCOM_TAIL_S = "\n"
-		
-		@@LCOM_HEAD = Regexp.escape(@@LCOM_HEAD_S)
-		@@LCOM_BODY ="[^\n]*"
-		@@LCOM_TAIL = Regexp.escape(@@LCOM_TAIL_S)
-		@@LINE_COMMENT = Regexp.new(@@LCOM_HEAD + @@LCOM_BODY + @@LCOM_TAIL)
-
-		@@BCOM_HEAD_S = "/*"
-		@@BCOM_TAIL_S = "*/"
-
-		@@BCOM_HEAD = Regexp.escape(@@BCOM_HEAD_S) + "\/?" # it seems not smart ('_')
-		@@BCOM_BODY = "([^\/]|[^\\*]\/)*"
-		@@BCOM_TAIL = Regexp.escape(@@BCOM_TAIL_S)
-		@@BLOCK_COMMENT = Regexp.new(@@BCOM_HEAD + @@BCOM_BODY + @@BCOM_TAIL)
-
-		@@COMMENT = Regexp.union(@@LINE_COMMENT, @@BLOCK_COMMENT)
-		@@FUNCTION_DEF = /((unsigned\s+|signed\s+)?\w+(\s+|\s*(\s*\*)+\s*)\w+\s*\([^\);]*\))/ # unsigned? type  name(signitures)
-
-
+require "./lang_def"
 
 	def removeComments(code)
 		removed = code.gsub(@@COMMENT, "")
@@ -53,9 +37,9 @@ class Decoder
 	#requires escaped text if you want to use "(", "*" and so on as a character
 	def createCommentContaining(text)
 	
-		line = Regexp.new( @@LCOM_HEAD + @@LCOM_BODY + text.to_s() + @@LCOM_BODY + @@LCOM_TAIL )
+		line = Regexp.new( @@LCOM_HEAD_S + @@LCOM_BODY_S + text.to_s() + @@LCOM_BODY_S + @@LCOM_TAIL_S )
 		
-		block = Regexp.new( @@BCOM_HEAD + @@BCOM_BODY + text.to_s + @@BCOM_BODY +@@BCOM_TAIL)
+		block = Regexp.new( @@BCOM_HEAD_S + @@BCOM_BODY_S + text.to_s() + @@BCOM_BODY_S +@@BCOM_TAIL_S)
 
 		puts "-------- comment " + text.to_s() + " created ------------"
 		puts "line pattern: "
@@ -91,7 +75,7 @@ class Decoder
 
 		start = code.index(name)
 		p start
-		state = ExtractingBegin.new(start)
+		state = ExtractingCode.new(start)
 
 		# solve by state pattern
 		while (not state.isEnd(code)) and (state.index < code.length) 
@@ -99,8 +83,53 @@ class Decoder
 		end
 
 		func = code[start..state.index]
+		
+		decoded = DecodedFunction.new(name, func, extractComments(func))
+		decoded.head = start
+		decoded.tail = state.index
 
-		decoded = DecodedFunction.new(name, removeComments(func), extractComments(func))
+		puts "-------- Func ---------"
+		puts decoded
+		return decoded
+	end
+
+
+	# detect deleted function
+	def extractFuncIfZero(code, name, start_)
+		require "./extracting"
+
+		# correct request?: start of #if has to be smaller than start of name
+		start = code.index(@@IF_ZERO_HEAD, start_)
+		func_start = code.index(name, start_)
+
+
+		# no #if exist
+		if start == nil || func_start == nil
+			return nil
+		end
+
+		if func_start <= start
+			return nil
+		end
+		
+		p start
+		state = ExtractingIfZero.new(start)
+
+		# solve by state pattern
+		while (not state.isEnd(code))
+			state = state.extract(code)
+		end
+
+		# not inside of #if 0 ... #endif
+		if state.index <= func_start
+			return nil
+		end
+
+		func = code[start..state.index]
+
+		decoded = DecodedFunction.new(name, func, extractComments(func))
+		decoded.head = start
+		decoded.tail = state.index
 
 		puts "-------- Func ---------"
 		puts decoded
@@ -118,8 +147,28 @@ class Decoder
 		
 		functions = Array.new()
 
+		last_index = 0
+		
 		for name in names
-			func = extractFunction(code, name)
+			# catch "#if 0" deleted functions
+			func_ifzero = nil
+			#func_ifzero = extractFuncIfZero(code, name, last_index)
+			func = nil
+
+			puts "start " + name
+			puts "last: " + last_index.to_s
+
+			if func_ifzero != nil
+				func = func_ifzero
+				func.deleted = true
+				puts name + " is deleted!"
+			else
+				# catch enabled functions
+				func = extractFunction(code, name)
+			end
+
+			last_index = func.tail + 1
+
 			functions.push func
 		end
 
@@ -155,5 +204,30 @@ class Decoder
 		return found
 	end
 
+	def eachFunctions(code, &onEach)
+
+		functions = extractFunctions(code)
+		for func in functions
+			onEach.call(func)
+		end
+
+	end
+
 end
+
+# test codes
+#dec = Decoder.new()
+#
+#code = nil;
+#
+#
+#open("test.c"){
+#	|file|
+#	code = file.read
+#}
+
+#puts dec.extractComments code
+#dec.removeComments code
+#dec.extractFunctions code
+
 
