@@ -87,11 +87,12 @@ require "./lang_def"
 		end
 		puts match[0]
 
-		start = match.begin(0)
-		state = extracting_class.new(start)
-		puts start.to_s
 		# solve by state pattern
-		while (not state.isEnd(code)) and (state.index < code.length) 
+		start = match.begin(0)
+		context = Context.new(start)
+		state = extracting_class.new(context)
+		puts start.to_s
+		while (not state.isEnd(code))
 			state = state.extract(code)
 		end
 
@@ -164,8 +165,10 @@ require "./lang_def"
 
 	# warning: this method catches function def. in comments as well
 	def extractFuncNames(code)
-		names = extractAll(code, @@FUNCTION_DEF)
-
+		noMacroIf = code.gsub(@@M_IF_SOME_HEAD, "").gsub(@@M_IF_TAIL, "")
+		names = extractAll(noMacroIf, @@FUNCTION_DEF)
+		
+		
 		puts "------ names ------"
 
 		puts "func def."
