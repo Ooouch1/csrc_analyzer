@@ -1,10 +1,8 @@
+$LOAD_PATH << File.dirname(__FILE__)
 
-require "./decoder"
+require "decoder"
 
 # test codes
-def Decoder::test
-
-	dec = Decoder.new()
 
 	code = nil;
 
@@ -18,15 +16,8 @@ def Decoder::test
 		raise "empty code"
 	end
 
-	puts code
-	
-	decoded = dec.extractMacroIf code, 0
-	
-#	puts dec.extractComments code
-#	dec.removeComments code
-	dec.extractFunctions code
 
-end
+decoder = Decoder.new
 
-Decoder::test
+puts decoder.decode(code, false)
 

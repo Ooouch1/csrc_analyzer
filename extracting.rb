@@ -1,5 +1,8 @@
+$LOAD_PATH << File.dirname(File::expand_path(__FILE__))
+
+
 	class ExtractingState
-		require "./lang_def"
+		require "lang_def"
 
 		attr_reader :context
 	  
@@ -15,9 +18,19 @@
 			return @context.index >= code.length
 		end
 		
-		def goNext(code)
+		def createNextState(code)
 		end
+
 		def extract(code)
+		end
+
+		def findIndex(code, reg, context)
+			index = code.index(reg, context.index)
+			if index == nil
+				index = context.index + 1
+			end
+			
+			index
 		end
 
 		def overLength?(code, start, text)
@@ -132,7 +145,7 @@
 			@vTAIL = tail
 		end
 		
-		def goNext(code, type, next_class = ExtractingEnd)
+		def createNextState(code, type, next_class = ExtractingEnd)
 			c = @context
 			
 			if isOnText(code, c.index, @vHEAD)
@@ -161,7 +174,7 @@
 			end
 
 			# keep going!
-			goNext(code, type)
+			createNextState(code, type)
 		end
 
 	end
@@ -175,6 +188,8 @@
 
 		def extract(code)
 
+#			@context.index = findIndex(code, /^\s/, @context)
+
 			# condtions to go to other action
 			c = @context
 			if c.index >= code.length
@@ -182,20 +197,24 @@
 				return ExtractingEnd.new(c)
 			end
 
-			if isOnText(code, c.index, @@M_IF_HEAD)
-				return SkippingMacroIf.new(c)
+			if code[c.index] == "#"
+				if isOnText(code, c.index, @@M_IF_HEAD)
+					return SkippingMacroIf.new(c)
+				end
 			end
 			
-			if isOnText(code, c.index, @@LCOM_HEAD)
-				return ExtractingLineComment.new(c)
+			if code[c.index] == "/"
+				if isOnText(code, c.index, @@LCOM_HEAD)
+					return ExtractingLineComment.new(c)
+				end
+			
+				if isOnText(code, c.index, @@BCOM_HEAD)
+						return ExtractingBlockComment.new(c)
+				end
 			end
 			
-			if isOnText(code, c.index, @@BCOM_HEAD)
-					return ExtractingBlockComment.new(c)
-			end
-
 			# keep going!
-			goNext(code, type)
+			createNextState(code, @type)
 		end
 
 	end
@@ -213,15 +232,14 @@
 		def extract(code)
 			
 			# imcompatible among language but fast
-			matched = code.match("#", @context.index)
-			@context.index = matched.begin(0)
+			@context.index = findIndex(code, "#", @context)
 			
 #			if index >= code.length
 #				raise "length over"
 #				return ExtractingEnd.new(@index)
 #			end
 #						
-			goNext(code, type)
+			createNextState(code, @type)
 		end
 
 	end
@@ -229,10 +247,10 @@
 
 	class SkippingMacroIf < ExtractingMacroIf
 		def extract(code)
-			matched = code.match("#", @context.index)
-			@context.index = matched.begin(0)
 			
-			goNext(code, type, ExtractingCode)
+			@context.index = findIndex(code, "#", @context)
+			
+			createNextState(code, @type, ExtractingCode)
 			
 		end
 	end
