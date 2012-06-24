@@ -1,7 +1,14 @@
 test.c
 name, loop, condition
 "int first()", , 
-"unsigned int f1(float a, float b)", ›, 
+"unsigned int f1(float a, float b)", 1, 
+"unsigned int f1_1(float a)", 1, 1
+"signed int * * f22()", , 
+"int * f2( )", 1, 1
+test.c
+name, loop, condition
+"int first()", , 
+"unsigned int f1(float a, float b)", 1, 
 "unsigned int f1_1(float a)", , 
 "signed int * * f22()", , 
-"int * f2( )", ›, ›
+"int * f2( )", , 
