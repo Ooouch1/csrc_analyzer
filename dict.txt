@@ -1,0 +1,7 @@
+"loop"
+["for", "while", "do"]
+
+"cond"
+["if", /else\sif/,
+"while"
+]

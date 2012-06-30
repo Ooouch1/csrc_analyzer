@@ -5,7 +5,7 @@ require "checker"
 
 # test codes
 
-	# a sample code of Decoder and Checker
+	# a sample code of Checker
 	# If you work hard, you may construct a javadoc-like documentation software
 	# with Decoder class.
 
@@ -29,7 +29,9 @@ require "checker"
 		code = file.read
 	}
 
-	checker = Checker.new
+	dict = Dictionary.new()
+	dict.load("dict.txt")
+	checker = Checker.new(dict)
 
 	csv = checker.createBodyCSV(file_name, code)
 	csv += checker.createCommentCSV(file_name, code)

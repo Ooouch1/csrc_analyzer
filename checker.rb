@@ -4,16 +4,10 @@
 $LOAD_PATH << File.dirname(File::expand_path(__FILE__))
 
 	class Checker
+		require "dictionary"
 
-		def initialize(dictionary = nil)
+		def initialize(dictionary)
 			@dictionary = dictionary # of grouped keywords
-
-			if dictionary == nil
-					require "dictionary"
-					@dictionary = loadDictionary
-					
-					puts @dictionary
-			end
 		end
 		
 		# returns hash of |group name, array of found keywords|
@@ -120,7 +114,7 @@ $LOAD_PATH << File.dirname(File::expand_path(__FILE__))
 
 		# a procedure called when a pair |group, keywords| 
 		# in the result of findKeywords() is converted into CSV style
-		# It must retun element of CSV as string.
+		# It must return element of CSV as string.
 		# override for other action
 		def onConvert(name, group, keywords)
 				if keywords.length > 0
@@ -150,6 +144,7 @@ $LOAD_PATH << File.dirname(File::expand_path(__FILE__))
 			return escaped
 		end
 		
+		# methods wrapping toCSV
 
 		# &onEachDecoded should return a hash of |group, keywords|
 		def createCSV(file_name, code, noComment=true, &onEachDecoded)
@@ -173,7 +168,6 @@ $LOAD_PATH << File.dirname(File::expand_path(__FILE__))
 	
 		end
 		
-		# methods wrapping toCSV
 		
 		def createCommentCSV(file_name, code)
 
